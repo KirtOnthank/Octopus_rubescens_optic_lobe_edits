@@ -258,3 +258,118 @@ sig.edits=edits[edits$padj<=0.1,]
 sig.edits=sig.edits[!is.na(sig.edits$padj),]
 write.xlsx(sig.edits,"Significant_Edits.xlsx")
 ```
+
+
+# Filtering for highest interest sites
+```{r}
+hico2=c(6,7,8)
+loco2=c(4,9,10)
+hico2.col=which(colnames(edits) %in% paste0("octo",hico2,"_per"))
+loco2.col=which(colnames(edits) %in% paste0("octo",loco2,"_per"))
+edits.sig$diff=abs(apply(edits.sig[loco2.col],1,mean)-apply(edits.sig[hico2.col],1,mean))
+
+write.csv(
+  edits.sig[edits.sig$padj<0.005&
+#              edits.sig$edited_reads>30&
+              edits.sig$diff>0.20&
+              edits.sig$genomic_aa!=edits.sig$edited_aa&
+              edits.sig$gdna_con=="A"&
+              edits.sig$edited=="G"&
+              edits.sig$octo10_tot>10&
+              edits.sig$octo4_tot>10&
+              edits.sig$octo6_tot>10&
+              edits.sig$octo7_tot>10&
+              edits.sig$octo8_tot>10&
+              edits.sig$octo9_tot>10&
+              edits.sig$gdna_reads>10,],
+  file = "high_priority_edits.csv"
+)
+
+```
+
+
+
+
+# Editing proportions
+```{r}
+edit.per=table(edits$gdna_con,edits$edited)
+edit.bar=c(edit.per[1,c(2,3,4)],edit.per[2,c(1,3,4)],edit.per[3,c(1,2,4)],edit.per[4,c(1,2,3)])
+edit.bar=100*(edit.bar/sum(table(edits$gdna_con,edits$edited)))
+names(edit.bar)=c("A>C","A>G","A>T","C>A","C>G","C>T","G>A","G>C","G>T","T>A","T>C","T>G")
+barplot(edit.bar)
+```
+
+
+
+## A -> G proportion by the number of mismatches
+
+```{r}
+edits$mismatches=0
+edits$mismatches[edits$gdna_con=="A"]=edits$octo10_C[edits$gdna_con=="A"]+
+  edits$octo10_T[edits$gdna_con=="A"]+edits$octo10_G[edits$gdna_con=="A"]+
+  edits$octo7_C[edits$gdna_con=="A"]+edits$octo7_T[edits$gdna_con=="A"]+
+  edits$octo7_G[edits$gdna_con=="A"]+edits$octo8_C[edits$gdna_con=="A"]+
+  edits$octo8_T[edits$gdna_con=="A"]+edits$octo8_G[edits$gdna_con=="A"]+
+  edits$octo4_C[edits$gdna_con=="A"]+edits$octo4_T[edits$gdna_con=="A"]+
+  edits$octo4_G[edits$gdna_con=="A"]+edits$octo9_C[edits$gdna_con=="A"]+
+  edits$octo9_T[edits$gdna_con=="A"]+edits$octo9_G[edits$gdna_con=="A"]+
+  edits$octo6_C[edits$gdna_con=="A"]+edits$octo6_T[edits$gdna_con=="A"]+
+  edits$octo6_G[edits$gdna_con=="A"]
+
+edits$mismatches[edits$gdna_con=="C"]=edits$octo10_A[edits$gdna_con=="C"]+
+  edits$octo10_T[edits$gdna_con=="C"]+edits$octo10_G[edits$gdna_con=="C"]+
+  edits$octo7_A[edits$gdna_con=="C"]+edits$octo7_T[edits$gdna_con=="C"]+
+  edits$octo7_G[edits$gdna_con=="C"]+edits$octo8_A[edits$gdna_con=="C"]+
+  edits$octo8_T[edits$gdna_con=="C"]+edits$octo8_G[edits$gdna_con=="C"]+
+  edits$octo4_A[edits$gdna_con=="C"]+edits$octo4_T[edits$gdna_con=="C"]+
+  edits$octo4_G[edits$gdna_con=="C"]+edits$octo9_A[edits$gdna_con=="C"]+
+  edits$octo9_T[edits$gdna_con=="C"]+edits$octo9_G[edits$gdna_con=="C"]+
+  edits$octo6_A[edits$gdna_con=="C"]+edits$octo6_T[edits$gdna_con=="C"]+
+  edits$octo6_G[edits$gdna_con=="C"]
+
+edits$mismatches[edits$gdna_con=="G"]=edits$octo10_A[edits$gdna_con=="G"]+
+  edits$octo10_T[edits$gdna_con=="G"]+edits$octo10_C[edits$gdna_con=="G"]+
+  edits$octo7_A[edits$gdna_con=="G"]+edits$octo7_T[edits$gdna_con=="G"]+
+  edits$octo7_C[edits$gdna_con=="G"]+edits$octo8_A[edits$gdna_con=="G"]+
+  edits$octo8_T[edits$gdna_con=="G"]+edits$octo8_C[edits$gdna_con=="G"]+
+  edits$octo4_A[edits$gdna_con=="G"]+edits$octo4_T[edits$gdna_con=="G"]+
+  edits$octo4_C[edits$gdna_con=="G"]+edits$octo9_A[edits$gdna_con=="G"]+
+  edits$octo9_T[edits$gdna_con=="G"]+edits$octo9_C[edits$gdna_con=="G"]+
+  edits$octo6_A[edits$gdna_con=="G"]+edits$octo6_T[edits$gdna_con=="G"]+
+  edits$octo6_C[edits$gdna_con=="G"]
+
+edits$mismatches[edits$gdna_con=="T"]=edits$octo10_A[edits$gdna_con=="T"]+
+  edits$octo10_G[edits$gdna_con=="T"]+edits$octo10_C[edits$gdna_con=="T"]+
+  edits$octo7_A[edits$gdna_con=="T"]+edits$octo7_G[edits$gdna_con=="T"]+
+  edits$octo7_C[edits$gdna_con=="T"]+edits$octo8_A[edits$gdna_con=="T"]+
+  edits$octo8_G[edits$gdna_con=="T"]+edits$octo8_C[edits$gdna_con=="T"]+
+  edits$octo4_A[edits$gdna_con=="T"]+edits$octo4_G[edits$gdna_con=="T"]+
+  edits$octo4_C[edits$gdna_con=="T"]+edits$octo9_A[edits$gdna_con=="T"]+
+  edits$octo9_G[edits$gdna_con=="T"]+edits$octo9_C[edits$gdna_con=="T"]+
+  edits$octo6_A[edits$gdna_con=="T"]+edits$octo6_G[edits$gdna_con=="T"]+
+  edits$octo6_C[edits$gdna_con=="T"]
+
+
+eds.mis=seq(from=0,to=1000,by=10)
+mis.ed=numeric()
+
+for (n in 1:length(eds.mis)){
+  mis.ed[n]=(table(edits$gdna_con[edits$mismatches>=eds.mis[n]],edits$edited[edits$mismatches>=eds.mis[n]])[1,3]/
+                sum(table(edits$gdna_con[edits$mismatches>=eds.mis[n]],edits$edited[edits$mismatches>=eds.mis[n]])))
+}
+
+plot(eds.mis,mis.ed,type="l",ylab="Proportion of A-to-G variants",xlab="Number of mRNA-gDNA mismatches")
+```
+
+
+```{r}
+sum(edits$gdna_con=="A"&edits$edited=="G")
+
+```
+
+```{r}
+sum(edits$padj<0.1,na.rm = T)
+
+sum(edits$padj<0.1&edits$gdna_con=="A"&edits$edited=="G",na.rm = T)
+```
+
