@@ -5,6 +5,7 @@ format: html
 
 ```{r}
 library(UniprotR)
+library(xlsx)
 ```
 
 
@@ -178,7 +179,7 @@ for (i in 1:nrow(edits)){
 ```
 
 
-We now have a huge pile of p-values, and suffer from ~55k multiple comparisons.  
+We now have a huge pile of p-values, and suffer from ~330k multiple comparisons.  
 To solve this we can apply a Benjamini & Hochberg false discovery rate correction to the p-values. 
 ```{r False discovery rate}
 edits$padj=p.adjust(edits$pval,method="BH")
@@ -194,8 +195,8 @@ edits.sig=edits.sig[edits.sig$padj<=0.01,]
 
 Getting swissprot accession numbers for the transcripts
 ```{r}
-swiss=read.csv("rubescens_transcriptome_ORF_swissprot_blastx_1bestalignment.csv",header=F)
-colnames(swiss)=c("orf","sumfin","acc","sumfin_else","i_dont_care","another_thing")
+swiss=read.table("rubescens_transcriptome_ORF_swissprot_blastx_1bestalignment.csv",header=F)
+colnames(swiss)=c("orf","acc","sumfin_else","i_dont_care","another_thing")
 edits.sig$acc=NA
 i=1
 for (i in 1:nrow(edits.sig)){
@@ -244,7 +245,7 @@ sum(edits.sig$padj<=0.05,na.rm = T)
 
 And how many are A to G edits?
 ```{r How many A->G sig}
-sum(edits$padj<=0.1&edits$gdna_con=="A"&edits$edited=="G",na.rm = T)
+sum(edits.sig$gdna_con=="A"&edits.sig$edited=="G",na.rm = T)
 ```
 
 ```{r}
@@ -254,9 +255,9 @@ write.csv(edits.sig,file = "sig_edits.csv")
 # Writing significant edits out to file
 We will write out all of the bases that have a false discovery rate of 0.1, or 10%, or less.
 ```{r Writing out}
-sig.edits=edits[edits$padj<=0.1,]
+sig.edits=edits[edits$padj<=0.05,]
 sig.edits=sig.edits[!is.na(sig.edits$padj),]
-write.xlsx(sig.edits,"Significant_Edits.xlsx")
+write.csv(edits.sig,"Significant_Edits.csv")
 ```
 
 
